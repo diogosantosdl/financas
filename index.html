@@ -81,7 +81,7 @@ body{font-family:-apple-system,"SF Pro Text","Helvetica Neue",sans-serif;backgro
 .add-circle{width:20px;height:20px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;line-height:1;flex-shrink:0;font-weight:300}
 .add-lbl{font-size:16px;color:var(--t1);letter-spacing:-.3px}
 .sal-row{display:flex;align-items:center;gap:5px;flex:1}
-.sal-pfx{font-size:16px;color:var(--t2]}
+.sal-pfx{font-size:16px;color:var(--t2)}
 .sal-input{font-size:16px;font-weight:500;color:var(--t1);background:transparent;border:none;outline:none;font-family:inherit;letter-spacing:-.3px;width:90px}
 .sum-lbl{flex:1;font-size:16px;letter-spacing:-.3px}
 .sum-val{font-size:16px;letter-spacing:-.3px}
@@ -351,15 +351,15 @@ function saveLocal(){try{localStorage.setItem('fin5',JSON.stringify(S))}catch(e)
 function save(){saveLocal();if(gistToken){clearTimeout(syncTimer);syncTimer=setTimeout(pushGist,1800)}}
 function setSyncIcon(st){
   const ic=document.getElementById('syncIcon');
-  const c={idle:'var(--t3)',syncing:'var(--orange)',synced:'var(--green)',error:'var(--red)'};
-  ic.style.stroke=c[st]||'var(--t3)';
+  const c={idle:'var(--t3)',error:'var(--red)'};
+  ic.style.stroke=c[st]||'var(--t3)%;
   if(st==='syncing')ic.classList.add('sync-rotating');else ic.classList.remove('sync-rotating');
 }
 async function pushGist(){
   if(!gistToken)return;setSyncIcon('syncing');
   try{
     const b={files:{[GF]:{content:JSON.stringify(S,null,2)}}};
-    let url='https://api.github.com/gists',m='POST';
+    let url='https://api.github.com/gists',c='POST';
     if(gistId){url+='/'+gistId;m='PATCH'}else{b.description='Financas App';b.public=false}
     const r=await fetch(url,{method:m,headers:{'Authorization':'token '+gistToken,'Content-Type':'application/json'},body:JSON.stringify(b)});
     if(r.ok){if(!gistId){const d=await r.json();gistId=d.id;localStorage.setItem('gist_id',gistId)}setSyncIcon('synced')}else setSyncIcon('error');
@@ -371,7 +371,7 @@ async function pullGist(){
     const r=await fetch('https://api.github.com/gists/'+gistId,{headers:{'Authorization':'token '+gistToken}});
     if(r.ok){
       const d=await r.json();const ct=d.files?.[GF]?.content;
-      if(ct){const rem=JSON.parse(ct);S={...DS(),...rem};if(!S.targets)S.targets={needs:50,leisure:30,savings:20};if(!S.savedLog)S.savedLog=[];saveLocal();document.getElementById('salaryInput').value=S.salary;renderLists();updateAll();renderLog()}
+      if(ct){const rem=JSON.parse(ct);S={...DS(),...rem};if(!S.targets)S.targets={needs:50,leisure:30,savings:20};if(!S.savedLog)S.savedLog=[];saveLocal();document.getElementById('salaryInput').value=S.salary;rende,ementById('salaryInput').value=S.salary;renderLists();updateAll();renderLog()}
       setSyncIcon('synced');
     }else setSyncIcon('error');
   }catch(e){setSyncIcon('error')}
@@ -393,13 +393,10 @@ function saveSheet(){
   const n=parseInt(document.getElementById('pctNeeds').value)||0;
   const l=parseInt(document.getElementById('pctLeisure').value)||0;
   const sv=parseInt(document.getElementById('pctSave').value)||0;
-  if(n+l+sv!==100){
-    document.getElementById('pctHint').textContent='Os percentuais somam '+(n+e+sv)+'% - devem somar 100%.';
-    document.getElementById('pctHint').className='pct-hint err';return;
-  }
+  if(n+l+sv!==100){document.getElementById('pctHint').textContent='Os percentuais somam '+(n+l+sv)+'% - devem somar 100%.';document.getElementById('pctHint').className='pct-hint err';return}
   S.salary=ns;S.targets={needs:n,leisure:l,savings:sv};document.getElementById('salaryInput').value=S.salary;
   const nt=document.getElementById('tokenInput').value.trim();
-  if(a!!=gistToken){gistToken=nt;localStorage.setItem('gist_token',gistToken);if(!gistToken){gistId='';localStorage.removeItem('gist_id');setSyncIcon('idle')}}
+  if(nt!==gistToken){gistToken=nt;localStorage.setItem('gist_token',gistToken);if(!gistToken){gistId='';localStorage.removeItem('gist_id');setSyncIcon('idle')}}
   save();updateAll();closeSheet();if(gistToken&&!gistId)pushGist();
 }
 function updatePctHint(){
@@ -411,7 +408,8 @@ function updatePctHint(){
 }
 ['pctNeeds','pctLeisure','pctSave'].forEach(id=>document.getElementById(id).addEventListener('input',updatePctHint));
 function switchTab(tab){
-  ['overview','expenses','savings'].forEach(t=>{&   document.getElementById('panel-'+t).classList.toggle('active',t===tab);
+  ['overview','expenses','savings'].forEach(t=>{
+    document.getElementById('panel-'+t).classList.toggle('active',t===tab);
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
   if(tab==='savings')renderLog();
@@ -483,7 +481,7 @@ function projData(){const m=Math.max(0,balance());return Array.from({length:13},
 function sparkData(){const b=Math.max(50,balance());return Array.from({length:7},(_,i)=>Math.round(b*(.65+.07*i+Math.sin(i*1.2)*.08)))}
 function initCharts(){
   const sCtx=document.getElementById('sparkCanvas').getContext('2d');
-  sparkChart=new Chart(sCtx,{type:'line',data:{labels:Array(7).fill(''),datasets:[{data:Array(7).fill(0),borderColor:'rgba(255,255,255,.5)',borderWidth:1.5,fill:true,tension:0.45,pointRadius:0,backgroundColor:ctx=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,50);g.addColorStop(0,'rgba(255,255,255,.13)');g.addColorStop(1,'rgba(255,255,255,0)');return g}}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:{duration:600}}});
+  sparkChart=new Chart(sCtx,{type:'line',data:{labels:Array(7).fill(''),datasets:[{data:Array(7).fill(0),b/rderColor:'rgba(255,255,255,.5)',borderWidth:1.5,fill:true,tension:0.45,pointRadius:0,backgroundColor:ctx=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,50);g.addColorStop(0,'rgba(255,255,255,.13)');g.addColorStop(1,'rgba(255,255,255,0)');return g}}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:{duration:600}}});
   const dCtx=document.getElementById('donutCanvas').getContext('2d');
   donutChart=new Chart(dCtx,{type:'doughnut',data:{labels:['Fixos','Avulsos','Saldo'],datasets:[{data:[555,0,1245],backgroundColor:['#FF9500','#FF3B30','#34C759'],borderWidth:0,hoverOffset:5,borderRadius:3}]},options:{responsive:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0)||1;return' '+fmt(ctx.raw)+' · '+Math.round(ctx.raw/t*100)+'%'}}}},animation:{animateRotate:true,duration:700}}});
   const pCtx=document.getElementById('projCanvas').getContext('2d');
@@ -543,7 +541,7 @@ function updateAll(){
   const tips=[];
   if(bal>0&&svOk)tips.push({c:'#34C759',t:'Saldo positivo',s:'Sobram '+fmt(bal)+'. Mova '+fmt(sSv)+' para um CDB ou Tesouro Selic.'});
   if(!nOk)tips.push({c:'#FF3B30',t:'Gastos acima do limite',s:Math.round(nP)+'% comprometido. Ideal abaixo de '+tN+'%.'});
-  if(fix>0)tips.push({c:'#FF9500',t:'Gastos fixos',s:fmtN(fix)+' fixos = '+Math.round(fix/(sal||1)*100)+'% do salário.'});
+  if(fix>0)tips.push({c:'#FF9500',t:'Gastos fixos',s:'}"$'+fmtN(fix)+' fixos = '+Math.round(fix/(sal||1)*100)+'% do salário.'});
   if(!S.variable.length)tips.push({c:'#007AFF',t:'Registre gastos avulsos',s:'Adicione supermercado, transporte e lazer para uma visão completa.'});
   const ts=S.savedLog.reduce((s,x)=>s+x.amount,0);
   if(ts>0)tips.push({c:'#34C759',t:'Poupança acumulada',s:'Você já guardou '+fmt(ts)+'. Continue na aba Guardado.'});
